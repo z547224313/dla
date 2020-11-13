@@ -25,7 +25,6 @@
   this.renderer.setSize(window.innerWidth, window.innerHeight); //设置渲染区域尺寸
   document.body.appendChild(this.renderer.domElement);
 
-
   this.group = new THREE.Group(); //3d 的层级 就像dom
   var s = 0.15;//所缩放尺度，这个代码里会影响光源
   this.group.scale.set(s, s, s);
@@ -45,13 +44,11 @@
       position: new THREE.Vector3(),
       radius: 0.1 + 0.9 * Math.random()
   };
-  this.bSphere = 2 * initBall.radius;
+  this.bSphere = initBall.radius; //2 
 
 
   this.balls = [initBall];
-  console.log(this.balls);
   for (var i = 0; i < 2; i++) {
-      console.log(11111);
       this.balls[i + 1] = this.createBall();
   }
 
@@ -125,7 +122,6 @@ Main.prototype = {
 
 
   createBall: function() {
-    console.log('createBall进入')
       var u = Math.random(); //虚拟半径
       var v = Math.random();
       var theta = 2 * Math.PI * u; //周长
@@ -140,14 +136,14 @@ Main.prototype = {
           radius: 0.2 + Math.random() * 0.8
       };
 
-      ball.position.multiplyScalar(this.bSphere + ball.radius);
+      ball.position.multiplyScalar(this.bSphere + ball.radius);  //随机球的位置 * （已经球的直径+随机求的半径）
 
       var closest = this.getClosest(ball);
 
       var diff = closest.position.clone().sub(ball.position);
-      diff.setLength(ball.radius + closest.radius).negate();
-      ball.position.addVectors(closest.position, diff);
-      var distFromCenter = ball.position.length() + ball.radius;
+      diff.setLength(ball.radius + closest.radius).negate(); //设置向量方向相同距离，然后取反
+      ball.position.addVectors(closest.position, diff); //设置改球的距离是 a+b
+      var distFromCenter = ball.position.length() + ball.radius; //改分形图形最大点距中心的距离
       if (distFromCenter > this.bSphere) {
           this.bSphere = distFromCenter;
       }
@@ -156,21 +152,23 @@ Main.prototype = {
 
 
   getClosest: function(ball) {
-      console.log('传进来位置随机的',ball);
+    //这个函数返回当前球中距离随机球最近的一个当前球
       var closest = this.balls.reduce(function(closest, b) {
-        console.log('克隆',b.position.clone());
-          var diff = b.position.clone().sub(ball.position); //创建一个（0,0,0） 减去ball
-          console.log('减去hou',diff);
-          var dist = diff.length() + b.radius + ball.radius;
+          var diff = b.position.clone().sub(ball.position); //balls中球与随机球的向量差值
+          var dist = diff.length() + b.radius + ball.radius; //计算到 0 0 0 的欧几里得长度+两 球半径
           if (dist < closest.dist) {
+              //当前距离<最近距离
+              //保存最小距离和球
               closest.dist = dist;
               closest.ball = b;
           }
           return closest;
       }, {
+          //传的默认球
           dist: Number.MAX_VALUE,
           ball: undefined
       });
+      //整个函数返回最小球
       return closest.ball;
   },
 
@@ -202,7 +200,7 @@ Main.prototype = {
 var main = new Main();
 
 function mergeGeometries(geometries) {
-
+   console.log(geometries);
   function getBufferLength(bufferName) {
       return geometries.reduce(function(n, geom) {
           return n + geom.attributes[bufferName].array.length;
@@ -210,7 +208,9 @@ function mergeGeometries(geometries) {
   }
 
   function mergeBuffer(bufferName, bufferType, itemSize) {
+      console.log(bufferName, getBufferLength(bufferName));
       var outBuffer = new bufferType(getBufferLength(bufferName));
+    
       geometries.reduce(function(outBuffer, geom) {
           var buffer = geom.attributes[bufferName].array;
           var n = buffer.length;
